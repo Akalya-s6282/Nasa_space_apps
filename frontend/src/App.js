@@ -1,70 +1,96 @@
 import React, { useEffect, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Stars } from '@react-three/drei';
 import './App.css';
 
 function App() {
-  const [asteroids, setAsteroids] = useState({});
-  const [error, setError] = useState(null);
+  const [asteroids, setAsteroids] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching data from backend...');
-        const response = await fetch('http://localhost:5000/api/asteroids');
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('Received data:', data);
+        const res = await fetch('http://localhost:5000/api/asteroids');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
         setAsteroids(data);
         setLoading(false);
-      } catch (error) {
-        console.error('Error details:', error);
-        setError(error.message);
+      } catch (err) {
+        setError(err.message);
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  const renderContent = () => {
-    if (loading) return <div className="loading">Loading asteroid data...</div>;
-    if (error) return <div className="error">Error: {error}</div>;
-
-    return (
-      <div className="asteroid-grid">
-        {Object.entries(asteroids).map(([date, asteroidsForDate]) => (
-          <div key={date} className="date-section">
-            <h2>{new Date(date).toLocaleDateString()}</h2>
-            <div className="asteroids-list">
-              {asteroidsForDate.map(asteroid => (
-                <div key={asteroid.id} className="asteroid-card">
-                  <h3>{asteroid.name}</h3>
-                  <p>Diameter: {(asteroid.estimated_diameter.meters.estimated_diameter_max).toFixed(2)} meters</p>
-                  <p>Speed: {parseFloat(asteroid.close_approach_data[0].relative_velocity.kilometers_per_hour).toFixed(2)} km/h</p>
-                  <p>Miss Distance: {parseFloat(asteroid.close_approach_data[0].miss_distance.kilometers).toFixed(2)} km</p>
-                  <p className={asteroid.is_potentially_hazardous_asteroid ? 'hazardous' : 'safe'}>
-                    {asteroid.is_potentially_hazardous_asteroid ? '⚠️ Potentially Hazardous' : '✅ Safe'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
+  // Scale asteroid distance to fit the 3D scene
+  const scaleDistance = (km) => (km ? km / 1e6 : 0);
 
   return (
     <div className="container">
       <h1>Asteroid Impact Simulation</h1>
-      {renderContent()}
+
+      {loading && <div className="loading">Loading asteroid data...</div>}
+      {error && <div className="error">Error: {error}</div>}
+
+      {!loading && !error && (
+        <>
+          {/* Asteroid Info Cards */}
+          <div className="asteroid-grid">
+            {asteroids.map((ast, idx) => (
+              <div key={idx} className={`asteroid-card ${ast.is_hazardous ? 'hazardous' : 'safe'}`}>
+                <h3>{ast.name}</h3>
+                <p>Diameter: {(ast.diameter_m || 0).toFixed(2)} m</p>
+                <p>Speed: {(parseFloat(ast.velocity_km_s) || 0).toFixed(2)} km/s</p>
+                <p>Miss Distance: {(parseFloat(ast.miss_distance_km) || 0).toLocaleString()} km</p>
+                <p>Impact Energy: {((ast.impact_energy_j || 0) / 1e15).toFixed(2)} PJ</p>
+                <p>Equivalent EQ Magnitude: {ast.earthquake_mag || 'N/A'}</p>
+                <p className={ast.is_hazardous ? 'hazardous-text' : 'safe-text'}>
+                  {ast.is_hazardous ? '⚠️ Potentially Hazardous' : '✅ Safe'}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* 3D Canvas */}
+          <div className="canvas-container" style={{ height: '600px' }}>
+            <Canvas camera={{ position: [0, 0, 50], fov: 60 }}>
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} />
+              <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade />
+
+              {/* Earth */}
+              <mesh>
+                <sphereGeometry args={[5, 32, 32]} />
+                <meshStandardMaterial color="blue" />
+              </mesh>
+
+              {/* Asteroids */}
+              {asteroids.map((ast, idx) => {
+                const distance = scaleDistance(parseFloat(ast.miss_distance_km));
+                const angle = (idx / asteroids.length) * Math.PI * 2;
+                const x = distance * Math.cos(angle);
+                const y = distance * Math.sin(angle);
+                const z = (Math.random() - 0.5) * 10;
+
+                return (
+                  <mesh key={idx} position={[x, y, z]}>
+                    <sphereGeometry args={[0.3, 16, 16]} />
+                    <meshStandardMaterial color={ast.is_hazardous ? 'red' : 'gray'} />
+                  </mesh>
+                );
+              })}
+
+              <OrbitControls enableZoom={true} />
+            </Canvas>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 export default App;
+
+
