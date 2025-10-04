@@ -25,30 +25,38 @@ def get_asteroids():
 
         for date in data['near_earth_objects']:
             for asteroid in data['near_earth_objects'][date]:
-                # Estimate mass from diameter (assuming avg density ~2500 kg/m³)
                 diameter_m = asteroid['estimated_diameter']['meters']['estimated_diameter_max']
-                volume_m3 = (4/3) * 3.1416 * (diameter_m/2)**3
+                volume_m3 = (4/3) * math.pi * (diameter_m / 2)**3
                 mass_kg = 2500 * volume_m3
 
-                # Velocity
                 velocity_km_s = float(asteroid['close_approach_data'][0]['relative_velocity']['kilometers_per_second'])
                 velocity_m_s = velocity_km_s * 1000
 
-                # Kinetic energy in Joules
                 impact_energy_j = 0.5 * mass_kg * velocity_m_s**2
-                # Rough estimate of equivalent earthquake magnitude (log scale)
                 earthquake_mag = 0.67 * (math.log10(impact_energy_j) - 4.4)
+
+                miss_distance_km = float(asteroid['close_approach_data'][0]['miss_distance']['kilometers'])
+
+                # Approx position in 3D (scaled)
+                angle1 = math.radians(hash(asteroid['name']) % 360)
+                angle2 = math.radians((hash(asteroid['name']) // 2) % 360)
+                distance_scaled = miss_distance_km / 1e6  # scale to millions of km
+
+                x = distance_scaled * math.cos(angle1) * math.cos(angle2)
+                y = distance_scaled * math.sin(angle1) * math.cos(angle2)
+                z = distance_scaled * math.sin(angle2)
 
                 neos.append({
                     "name": asteroid['name'],
                     "diameter_m": diameter_m,
                     "velocity_km_s": velocity_km_s,
-                    "miss_distance_km": float(asteroid['close_approach_data'][0]['miss_distance']['kilometers']),
+                    "miss_distance_km": miss_distance_km,
                     "approach_date": asteroid['close_approach_data'][0]['close_approach_date'],
                     "orbiting_body": asteroid['close_approach_data'][0]['orbiting_body'],
                     "is_hazardous": asteroid['is_potentially_hazardous_asteroid'],
                     "impact_energy_j": impact_energy_j,
-                    "earthquake_mag": round(earthquake_mag, 2)
+                    "earthquake_mag": round(earthquake_mag, 2),
+                    "position": {"x": x, "y": y, "z": z}
                 })
 
         return jsonify(neos)

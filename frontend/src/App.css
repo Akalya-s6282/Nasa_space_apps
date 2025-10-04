@@ -1,87 +1,149 @@
+/* ---------- Global Reset ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html, #root {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 30%, #000015 0%, #000010 100%);
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+}
+
+/* ---------- Main Container ---------- */
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
+/* ---------- Title ---------- */
 h1 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 30px;
-  font-size: 2.5em;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  margin: 20px 0;
+  font-size: 2.8rem;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, #00eaff, #007bff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 10px rgba(0, 234, 255, 0.5);
 }
 
-.asteroid-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+/* ---------- 3D Canvas Container ---------- */
+.canvas-container {
+  width: 100%;
+  height: calc(100vh - 100px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at 50% 50%, #000015 0%, #000010 100%);
+  position: relative;
+}
+
+/* ---------- Hover Info Card ---------- */
+.info-card {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background: rgba(15, 20, 40, 0.85);
+  border: 1px solid rgba(0, 234, 255, 0.3);
+  border-radius: 16px;
   padding: 20px;
+  width: 300px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-.asteroid-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.info-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: #00eaff;
 }
 
-.asteroid-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.asteroid-card h3 {
-  color: #2c3e50;
-  margin: 0 0 15px 0;
-  font-size: 1.2em;
-  border-bottom: 2px solid #eee;
-  padding-bottom: 8px;
-}
-
-.asteroid-card p {
-  margin: 12px 0;
-  color: #666;
+.info-card p {
+  font-size: 0.95rem;
+  margin: 8px 0;
   line-height: 1.4;
+  color: #e0e0e0;
 }
 
-.hazardous {
-  color: #e74c3c;
+.info-card p:last-child {
+  margin-top: 12px;
   font-weight: bold;
-  padding: 8px;
-  background: #fff5f5;
-  border-radius: 6px;
-  border-left: 4px solid #e74c3c;
+  font-size: 1rem;
 }
 
-.safe {
-  color: #27ae60;
+.info-card p span {
   font-weight: bold;
-  padding: 8px;
-  background: #f0fff4;
-  border-radius: 6px;
-  border-left: 4px solid #27ae60;
 }
 
-.loading {
-  text-align: center;
-  padding: 40px;
-  font-size: 1.2em;
-  color: #666;
-  background: white;
+.info-card .hazardous {
+  color: #ff4d4d;
+}
+
+.info-card .safe {
+  color: #4dff88;
+}
+
+/* ---------- Loading and Error States ---------- */
+.loading,
+.error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.4rem;
+  padding: 15px 30px;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  color: #fff;
 }
 
 .error {
-  text-align: center;
-  padding: 20px;
-  color: #e74c3c;
-  background: #fdf0ed;
-  border-radius: 8px;
-  margin: 20px 0;
-  border: 1px solid #fab0a4;
+  color: #ff4d4d;
+  border: 1px solid rgba(255, 77, 77, 0.4);
+}
+
+/* ---------- Scrollbar Styling (Optional) ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 234, 255, 0.4);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 234, 255, 0.7);
+}
+
+/* ---------- Animations ---------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 234, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 234, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 234, 255, 0);
+  }
 }
